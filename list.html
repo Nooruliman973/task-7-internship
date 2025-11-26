@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>List Items</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav> <a href="list.html">Dashboard</a> | <a href="add.html">Add</a> </nav>
+
+  <main>
+    <h1>Items</h1>
+    <input id="search" placeholder="Search by title..." />
+    <table id="itemsTable" border="1" cellpadding="8">
+      <thead><tr><th>Title</th><th>Description</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <script>
+  async function fetchItems(){
+    const res = await fetch('/api/items');
+    const items = await res.json();
+    const tbody = document.querySelector('#itemsTable tbody');
+    tbody.innerHTML = '';
+    items.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(item.title)}</td>
+        <td>${escapeHtml(item.description || '')}</td>
+        <td>${new Date(item.created_at).toLocaleString()}</td>
+        <td>
+          <a href="edit.html?id=${item.id}">Edit</a>
+          <button data-id="${item.id}" class="deleteBtn">Delete</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    document.querySelectorAll('.deleteBtn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        if (!confirm('Delete this item?')) return;
+        const id = e.target.dataset.id;
+        const res = await fetch('/api/items/' + id, { method: 'DELETE' });
+        if (res.ok) fetchItems();
+        else alert('Delete failed');
+      });
+    });
+  }
+
+  // simple XSS escape
+  function escapeHtml(str = '') {
+    return str.replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  // search filter
+  document.getElementById('search').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('#itemsTable tbody tr').forEach(tr => {
+      const title = tr.children[0].textContent.toLowerCase();
+      tr.style.display = title.includes(q) ? '' : 'none';
+    });
+  });
+
+  fetchItems();
+  </script>
+</body>
+</html>

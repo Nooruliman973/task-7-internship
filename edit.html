@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Edit Item</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav> <a href="list.html">Dashboard</a> | <a href="add.html">Add</a> </nav>
+
+  <main>
+    <h1>Edit Item</h1>
+    <form id="editForm">
+      <label>Title</label>
+      <input id="title" maxlength="150" required />
+      <small id="titleError"></small>
+
+      <label>Description</label>
+      <textarea id="description" rows="5"></textarea>
+
+      <button type="submit">Save</button>
+    </form>
+    <div id="msg"></div>
+  </main>
+
+  <script>
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if (!id) { document.getElementById('msg').textContent = 'No id provided'; }
+
+  async function loadItem(){
+    const res = await fetch('/api/items/' + id);
+    if (!res.ok) { document.getElementById('msg').textContent = 'Item not found'; return; }
+    const item = await res.json();
+    document.getElementById('title').value = item.title;
+    document.getElementById('description').value = item.description;
+  }
+
+  document.getElementById('editForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    if (!title) { document.getElementById('titleError').textContent = 'Title required'; return; }
+    const res = await fetch('/api/items/' + id, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ title, description })
+    });
+    if (res.ok) {
+      document.getElementById('msg').textContent = 'Updated successfully';
+      setTimeout(()=> location.href = 'list.html', 800);
+    } else {
+      const err = await res.json();
+      document.getElementById('msg').textContent = 'Error: ' + (err.error || res.statusText);
+    }
+  });
+
+  loadItem();
+  </script>
+</body>
+</html>

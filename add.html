@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Add Item</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav> <a href="list.html">Dashboard</a> | <a href="add.html">Add</a> </nav>
+
+  <main>
+    <h1>Add New Item</h1>
+    <form id="addForm">
+      <label>Title</label>
+      <input type="text" id="title" maxlength="150" required />
+      <small id="titleError"></small>
+
+      <label>Description</label>
+      <textarea id="description" rows="5" maxlength="1000"></textarea>
+
+      <button type="submit">Add Item</button>
+    </form>
+    <div id="message"></div>
+  </main>
+
+  <script>
+  document.getElementById('addForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+
+    if (!title) {
+      document.getElementById('titleError').textContent = 'Title required';
+      return;
+    } else {
+      document.getElementById('titleError').textContent = '';
+    }
+
+    try{
+      const res = await fetch('/api/items', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ title, description })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        document.getElementById('message').textContent = 'Error: ' + (err.error || res.statusText);
+        return;
+      }
+      const created = await res.json();
+      document.getElementById('message').textContent = 'Item added successfully.';
+      // Optionally redirect to list
+      setTimeout(()=> location.href = 'list.html', 800);
+    } catch (err) {
+      document.getElementById('message').textContent = 'Network error';
+    }
+  });
+  </script>
+</body>
+</html>
